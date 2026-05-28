@@ -1,8 +1,228 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NiGROOM Hub - Beauty Marketplace & Store</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
-</body>
-</html>
+<body style="font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #0f172a 0%, #022c22 100%); display: flex; flex-direction: column; align-items: center; min-height: 100vh; color: #f8fafc;">
+
+    <div style="width: 100%; max-width: 480px; background: rgba(15, 23, 42, 0.95); padding: 18px 20px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #10b981; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(12px); box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                <span style="color: white; font-size: 20px; font-weight: 900;">N</span>
+            </div>
+            <div>
+                <span style="color: #ffffff; font-weight: 800; font-size: 20px; letter-spacing: -0.5px; display: block;">NiGROOM</span>
+                <span style="color: #10b981; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Premium Hub</span>
+            </div>
+        </div>
+        <button onclick="window.switchTab('store')" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: white; border: none; padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">🛍️ SHOP STORE</button>
+    </div>
+
+    <div id="authScreen" style="width: 100%; max-width: 400px; margin: 40px 20px; padding: 35px; background: #ffffff; border-radius: 28px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); text-align: center; box-sizing: border-box;">
+        <h2 style="color: #0f172a; margin: 0 0 6px 0; font-weight: 800; font-size: 26px; letter-spacing: -0.5px;">Welcome to NiGROOM</h2>
+        <p style="color: #64748b; font-size: 14px; margin: 0 0 30px 0; font-weight: 500;">Your beauty gateway in Bungoma County</p>
+        
+        <div style="text-align: left; margin-bottom: 16px;">
+            <label style="font-size: 11px; color: #334155; font-weight: 700; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Full Name</label>
+            <input type="text" id="userName" placeholder="Enter your official name" required style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; box-sizing: border-box; background: #f8fafc; font-size: 15px; color: #0f172a; outline: none; font-weight: 500;">
+        </div>
+
+        <div style="text-align: left; margin-bottom: 16px;">
+            <label style="font-size: 11px; color: #334155; font-weight: 700; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">WhatsApp / M-PESA Number</label>
+            <input type="tel" id="userPhone" placeholder="e.g. 0712345678" required style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; box-sizing: border-box; background: #f8fafc; font-size: 15px; color: #0f172a; outline: none; font-weight: 500;">
+        </div>
+
+        <div style="text-align: left; margin-bottom: 16px;">
+            <label style="font-size: 11px; color: #334155; font-weight: 700; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Village / Location</label>
+            <input type="text" id="userVillage" placeholder="e.g. Napara or Khasolo" required style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; box-sizing: border-box; background: #f8fafc; font-size: 15px; color: #0f172a; outline: none; font-weight: 500;">
+        </div>
+        
+        <div style="text-align: left; margin-bottom: 30px;">
+            <label style="font-size: 11px; color: #334155; font-weight: 700; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Select Account Mode</label>
+            <select id="userRole" required style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; box-sizing: border-box; background: #f8fafc; font-size: 15px; color: #0f172a; font-weight: 600; cursor: pointer; outline: none;">
+                <option value="stylist">💇‍♀️ Stylist (Get Hair Bookings)</option>
+                <option value="client">👑 Client (Discover & Book Stylists)</option>
+            </select>
+        </div>
+
+        <button onclick="window.handleRegistration()" style="width: 100%; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);">LAUNCH MY NETWORK</button>
+        <div id="statusMessage" style="margin-top: 20px; font-size: 14px; font-weight: 600;"></div>
+    </div>
+
+    <div id="mainDashboard" style="display: none; width: 100%; max-width: 480px; margin: 15px 20px 40px 20px; box-sizing: border-box;">
+        
+        <div style="display: flex; gap: 12px; margin-bottom: 20px; padding: 0 5px;">
+            <button id="tabBtnNetwork" onclick="window.switchTab('network')" style="flex: 1; padding: 16px; border-radius: 16px; border: none; font-weight: 800; font-size: 14px; cursor: pointer; background: #ffffff; color: #0f172a; box-shadow: 0 10px 25px rgba(0,0,0,0.25); transition: 0.2s;">💇‍♀️ Marketplace</button>
+            <button id="tabBtnStore" onclick="window.switchTab('store')" style="flex: 1; padding: 16px; border-radius: 16px; border: none; font-weight: 800; font-size: 14px; cursor: pointer; background: rgba(255,255,255,0.1); color: #ffffff; transition: 0.2s;">🛍️ Beauty Store</button>
+        </div>
+
+        <div id="networkTabSection" style="background: #ffffff; padding: 28px; border-radius: 28px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); color: #0f172a;">
+            <h1 id="userGreeting" style="color: #0f172a; margin: 0 0 4px 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">Hello!</h1>
+            <p style="color: #64748b; font-size: 14px; margin: 0 0 20px 0; font-weight: 500;">Welcome to your live ecosystem.</p>
+            <hr style="border: 0; height: 1px; background: #e2e8f0; margin: 20px 0;">
+
+            <div id="stylistDashboardView" style="display: none;">
+                <div id="visibilityStatusBanner" style="background: #fef3c7; color: #92400e; padding: 16px; border-radius: 16px; font-size: 14px; margin-bottom: 25px; border: 1px solid #fde68a; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                    <span>⚠️</span> <div><strong>Status: Invisible</strong> You are hidden from local client catalogs.</div>
+                </div>
+                
+                <h3 style="margin: 0 0 12px 0; color: #0f172a; font-weight: 800; font-size: 18px;">Your Professional Cards</h3>
+                <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 2px dashed #cbd5e1; padding: 18px; border-radius: 16px; margin-bottom: 25px; color: #334155; font-size: 14px; line-height: 1.6;">
+                    🌐 Service Scope: <span style="font-weight:700; color:#0f172a;">Bungoma County</span><br>
+                    📍 Exact Location: <span id="displayVillage" style="font-weight:700; color:#10b981;">Napara</span><br>
+                    ✂️ Active Catalog: <span id="displayStyles" style="font-weight:700; color:#0f172a;">Lines & Braids (Standard)</span>
+                </div>
+
+                <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; padding: 20px; border-radius: 18px; margin-bottom: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="background: #10b981; color: white; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">Freemium Plan Active</span>
+                        <span style="color: #156534; font-weight: 700; font-size: 12px;">0.00 Ksh/mo</span>
+                    </div>
+                    <h4 style="margin: 0 0 6px 0; color: #14532d; font-size: 15px; font-weight: 800;">🔒 Photo Uploads Locked</h4>
+                    <p style="margin: 0; font-size: 12px; color: #166534; line-height: 1.5;">To display custom hairdo sample photos, open extra styling listings, and get recommended at the top of local Bungoma searches, upgrade to premium.</p>
+                </div>
+
+                <div style="background: #0f172a; border-radius: 20px; padding: 22px; text-align: center; color: white; box-shadow: 0 10px 25px rgba(15,23,42,0.15);">
+                    <h4 id="actionHeading" style="margin: 0 0 6px 0; font-size: 16px; font-weight: 800; color: #ffffff;">Go Live & Attract Clients</h4>
+                    <p id="actionText" style="font-size: 12px; color: #94a3b8; margin-bottom: 18px; line-height: 1.4;">Switch your visibility status ON right now so client searches instantly display your profile card.</p>
+                    <button id="toggleVisibilityBtn" onclick="window.toggleStylistVisibility()" style="width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 15px;">GO ONLINE ON MARKETPLACE</button>
+                </div>
+            </div>
+
+            <div id="clientSearchSection" style="display: none;">
+                <h3 style="color: #0f172a; font-size: 20px; font-weight: 800; margin: 0 0 4px 0; letter-spacing: -0.5px;">Find Hair Stylists</h3>
+                <p style="color: #64748b; font-size: 13px; margin: 0 0 20px 0;">Filter instantaneously across villages to match your custom wallet budget:</p>
+                
+                <div style="background: #f8fafc; border: 2px solid #e2e8f0; padding: 18px; border-radius: 20px; margin-bottom: 25px; display: flex; flex-direction: column; gap: 12px;">
+                    <div>
+                        <label style="font-size: 11px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px; text-transform: uppercase;">📍 Target Village / Location:</label>
+                        <input type="text" id="filterVillage" placeholder="Type village name e.g. Napara" oninput="window.fetchStylistDirectory()" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 14px; font-weight: 500;">
+                    </div>
+                    <div>
+                        <label style="font-size: 11px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px; text-transform: uppercase;">💰 Maximum Budget Limit (Ksh):</label>
+                        <input type="number" id="filterBudget" placeholder="Enter max hair price e.g. 1200" oninput="window.fetchStylistDirectory()" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 14px; font-weight: 500;">
+                    </div>
+                </div>
+
+                <div id="directoryList" style="display: flex; flex-direction: column; gap: 14px;">
+                    <p style="color: #64748b; font-style: italic; font-size: 13px;">Refreshing available stylists...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="storeTabSection" style="display: none; background: #ffffff; padding: 28px; border-radius: 28px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); color: #0f172a;">
+            <h2 style="color: #0f172a; margin: 0 0 4px 0; font-weight: 800; font-size: 24px; letter-spacing: -0.5px;">Beauty Supply Store</h2>
+            <p style="color: #64748b; font-size: 13px; margin: 0 0 20px 0;">Jumia-style beauty logistics with localized pickup options.</p>
+            
+            <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 2px dashed #0f172a; border-radius: 20px; padding: 20px; margin-bottom: 25px;">
+                <h4 style="margin: 0 0 6px 0; font-size: 14px; font-weight: 800; color: #0f172a;">🏪 Add Store Inventory Item (Admin Panel)</h4>
+                <p style="margin: 0 0 12px 0; font-size: 12px; color: #64748b;">Instantly upload product photos onto the live displays.</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <input type="text" id="storeProdName" placeholder="Product Name (e.g. Darling Braid)" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
+                    <input type="number" id="storeProdPrice" placeholder="Price (Ksh)" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
+                    <label style="font-size: 11px; font-weight: 700; color: #475569;">📸 Choose Product image:</label>
+                    <input type="file" id="storeProdPhoto" accept="image/*" style="font-size:12px;">
+                    <button onclick="window.handleAdminProductUpload()" style="background: #0f172a; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">Upload Item Live</button>
+                </div>
+            </div>
+
+            <hr style="border:0; height:1px; background:#e2e8f0; margin:20px 0;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;" id="storeGrid"></div>
+        </div>
+
+        <div id="checkoutModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.85); justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box; backdrop-filter: blur(4px);">
+            <div style="background: #ffffff; color: #0f172a; padding: 30px; border-radius: 24px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.4); box-sizing: border-box;">
+                <h3 style="margin: 0 0 6px 0; font-weight: 800; font-size: 20px;">Secure Checkout</h3>
+                <p id="checkoutItemTitle" style="margin: 0 0 20px 0; color: #10b981; font-weight: 700; font-size: 14px;"></p>
+                
+                <div style="margin-bottom: 20px; text-align: left;">
+                    <label style="font-size: 11px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px; text-transform: uppercase;">Select Delivery Method:</label>
+                    <select id="deliveryOption" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; background: #f8fafc; font-size: 14px; font-weight: 600; cursor: pointer;" onchange="window.updateFulfillmentDisplay()">
+                        <option value="pickup">🏪 Store Pickup (Free - Khasolo/Napara Hub)</option>
+                        <option value="delivery">🛵 Bodaboda Delivery (+ Ksh 150)</option>
+                    </select>
+                </div>
+
+                <div id="deliveryAddressBox" style="display: none; margin-bottom: 20px; text-align: left;">
+                    <label style="font-size: 11px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px; text-transform: uppercase;">Landmark / Directions:</label>
+                    <input type="text" id="checkoutDirections" placeholder="e.g. Near Khasolo primary school" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 13px;">
+                </div>
+
+                <div style="background: #f8fafc; padding: 14px; border-radius: 12px; text-align: left; margin-bottom: 25px; font-size: 13px; line-height: 1.5; border: 1px solid #e2e8f0;">
+                    💳 <b>Payment System:</b> Cash on Delivery or Lipa na M-PESA during collection/fulfillment context. 
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="document.getElementById('checkoutModal').style.display='none'" style="flex: 1; background: #cbd5e1; color: #334155; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer;">Cancel</button>
+                    <button onclick="window.submitFinalStoreOrder()" style="flex: 2; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 800; cursor: pointer;">Confirm Purchase</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ INSERT YOUR SUPABASE CREDS HERE BEFORE PASTING ON VERCEL
+        const SUPABASE_URL = "https://jrogihyhjdkwodfrmeli.supabase.co"; 
+        const SUPABASE_ANON_KEY = "sb_publishable_foNvA-qV4xYATd3osECIAg_quHvfiRn";
+
+        let supabaseClient;
+        let currentUserPhone = "";
+        let isProfileOnline = false;
+        let selectedProductForCheckout = {};
+
+        function initSupabase() {
+            if (window.supabase && !supabaseClient && SUPABASE_URL !== "YOUR_SUPABASE_URL") {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            if (!statusDiv) return;
+            statusDiv.innerText = message;
+            statusDiv.style.color = type === 'error' ? '#dc2626' : type === 'success' ? '#059669' : '#d97706';
+        }
+
+        window.switchTab = function(activeTab) {
+            const netTab = document.getElementById('networkTabSection');
+            const storeTab = document.getElementById('storeTabSection');
+            const netBtn = document.getElementById('tabBtnNetwork');
+            const storeBtn = document.getElementById('tabBtnStore');
+
+            document.getElementById('mainDashboard').style.display = 'block';
+
+            if (activeTab === 'network') {
+                netTab.style.display = 'block';
+                storeTab.style.display = 'none';
+                netBtn.style.background = '#ffffff'; netBtn.style.color = '#0f172a'; netBtn.style.boxShadow = '0 10px 25px rgba(0,0,0,0.25)';
+                storeBtn.style.background = 'rgba(255,255,255,0.1)'; storeBtn.style.color = '#ffffff'; storeBtn.style.boxShadow = 'none';
+            } else {
+                netTab.style.display = 'none';
+                storeTab.style.display = 'block';
+                storeBtn.style.background = '#ffffff'; storeBtn.style.color = '#0f172a'; storeBtn.style.boxShadow = '0 10px 25px rgba(0,0,0,0.25)';
+                netBtn.style.background = 'rgba(255,255,255,0.1)'; netBtn.style.color = '#ffffff'; netBtn.style.boxShadow = 'none';
+                window.loadStoreProducts();
+            }
+        };
+
+        window.fetchStylistDirectory = async function() {
+            const directoryContainer = document.getElementById('directoryList');
+            initSupabase();
+            if (!supabaseClient) return;
+
+            const filterVillageVal = document.getElementById('filterVillage').value.trim().toLowerCase();
+            const filterBudgetVal = parseFloat(document.getElementById('filterBudget').value) || Infinity;
+
+            try {
+                const { data: stylists, error } = await supabaseClient
+                    .from('users_data')
+                    .select('full_name, location_village, phone_number, max_budget, styles_list')
+                    .eq('user_role', 'stylist')
+                    .eq('is_online', true);
+
+                if (error) {
+                    directoryContainer.innerHTML = `<p style="color:red; font-size:13px;">Error loadin
