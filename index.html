@@ -225,4 +225,256 @@
                     .eq('is_online', true);
 
                 if (error) {
-                    directoryContainer.innerHTML = `<p style="color:red; font-size:13px;">Error loadin
+                    directoryContainer.innerHTML = `<p style="color:red; font-size:13px;">Error loading data: ${error.message}</p>`;
+                    return;
+                }
+
+                const filtered = stylists.filter(s => {
+                    const matchesLoc = !filterVillageVal || (s.location_village && s.location_village.toLowerCase().includes(filterVillageVal));
+                    const matchesBudg = (s.max_budget || 1000) <= filterBudgetVal;
+                    return matchesLoc && matchesBudg;
+                });
+
+                if (filtered.length === 0) {
+                    directoryContainer.innerHTML = `<div style="background:#f8fafc; border:1px solid #cbd5e1; padding:20px; border-radius:16px; color:#64748b; font-size:13px; text-align:center;">No stylists active with matching parameters right now.</div>`;
+                    return;
+                }
+
+                directoryContainer.innerHTML = '';
+                filtered.forEach(stylist => {
+                    const card = document.createElement('div');
+                    card.style.cssText = "background:#f8fafc; border:1px solid #e2e8f0; padding:18px; border-radius:20px; display:flex; flex-direction:column; gap:10px;";
+                    
+                    const textMsg = encodeURIComponent(`Hello ${stylist.full_name}, I saw your active listing on NiGROOM and would love to book a hair service appointment!`);
+                    const whatsappLink = `https://wa.me/254${stylist.phone_number.replace(/^0/, '')}?text=${textMsg}`;
+
+                    card.innerHTML = `
+                        <div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="width:10px; height:10px; background:#10b981; border-radius:50%;"></span>
+                                <strong style="color:#0f172a; font-size:16px; font-weight:800;">${stylist.full_name}</strong>
+                            </div>
+                            <p style="margin:6px 0 0 0; font-size:13px; color:#475569; line-height:1.5;">
+                                📍 Village: <b>${stylist.location_village}</b><br>
+                                ✂️ Offers: <b>${stylist.styles_list || 'Braids, Lines'}</b><br>
+                                💰 Target Budget: <b style="color:#10b981;">Ksh ${stylist.max_budget || '1,000'}</b>
+                            </p>
+                        </div>
+                        <a href="${whatsappLink}" target="_blank" style="text-align:center; background:#25D366; color:white; text-decoration:none; padding:12px; border-radius:12px; font-weight:800; font-size:14px;">💬 BOOK VIA WHATSAPP</a>
+                    `;
+                    directoryContainer.appendChild(card);
+                });
+            } catch (err) {
+                directoryContainer.innerHTML = `<p style="color:red; font-size:13px;">Error: ${err.message}</p>`;
+            }
+        };
+
+        window.handleAdminProductUpload = async function() {
+            initSupabase();
+            if (!supabaseClient) return alert("Database connection uninitialized.");
+
+            const name = document.getElementById('storeProdName').value.trim();
+            const price = parseFloat(document.getElementById('storeProdPrice').value);
+            const photoFile = document.getElementById('storeProdPhoto').files[0];
+
+            if (!name || !price) return alert("Please enter the name and price parameters.");
+
+            let finalPhotoUrl = "🧴";
+
+            try {
+                if (photoFile) {
+                    const fileExt = photoFile.name.split('.').pop();
+                    const fileName = `${Math.random()}.${fileExt}`;
+                    const filePath = `product_images/${fileName}`;
+
+                    const { error: uploadError } = await supabaseClient.storage
+                        .from('store_photos')
+                        .upload(filePath, photoFile);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data } = supabaseClient.storage.from('store_photos').getPublicUrl(filePath);
+                    finalPhotoUrl = data.publicUrl;
+                }
+
+                const { error: dbError } = await supabaseClient
+                    .from('beauty_store')
+                    .insert([{ product_name: name, product_price: price, product_image: finalPhotoUrl }]);
+
+                if (dbError) throw dbError;
+
+                alert("Product live item uploaded successfully!");
+                window.loadStoreProducts();
+
+            } catch (err) {
+                alert("Upload operation failed: " + err.message);
+            }
+        };
+
+        window.loadStoreProducts = async function() {
+            const grid = document.getElementById('storeGrid');
+            initSupabase();
+            if (!supabaseClient) return;
+
+            try {
+                const { data: products, error } = await supabaseClient
+                    .from('beauty_store')
+                    .select('*');
+
+                if (error || !products || products.length === 0) {
+                    grid.innerHTML = `
+                        <div style="border:1px solid #e2e8f0; border-radius:20px; padding:16px; background:#f8fafc; text-align:center; width: 100%; grid-column: span 2;">
+                            <div style="font-size:32px;">🧴</div>
+                            <strong style="font-size:14px; color:#0f172a;">NiGROOM Store Initialized</strong>
+                            <p style="color:#64748b; font-size:12px; margin: 4px 0 0 0;">Add your first items using the panel above!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = '';
+                products.forEach(p => {
+                    const item = document.createElement('div');
+                    item.style.cssText = "border:1px solid #e2e8f0; border-radius:20px; padding:14px; background:#f8fafc; text-align:center; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 6px rgba(0,0,0,0.01);";
+                    
+                    const isImgUrl = p.product_image && p.product_image.startsWith('http');
+                    const imageDisplay = isImgUrl ? `<img src="${p.product_image}" style="width:100%; height:100px; object-fit:cover; border-radius:12px; margin-bottom:8px;">` : `<div style="font-size:40px; margin-bottom:8px;">${p.product_image || '🧴'}</div>`;
+
+                    item.innerHTML = `
+                        <div>
+                            ${imageDisplay}
+                            <strong style="font-size:14px; color:#0f172a; display:block; line-height:1.3;">${p.product_name}</strong>
+                        </div>
+                        <div>
+                            <span style="color:#10b981; font-weight:700; font-size:14px; display:block; margin:6px 0 10px 0;">Ksh ${p.product_price}</span>
+                            <button onclick="window.triggerCheckout('${p.product_name}', ${p.product_price})" style="width:100%; background:#0f172a; color:white; border:none; padding:10px; border-radius:10px; font-weight:700; cursor:pointer; font-size:12px;">BUY NOW</button>
+                        </div>
+                    `;
+                    grid.appendChild(item);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        window.triggerCheckout = function(name, price) {
+            selectedProductForCheckout = { name, price };
+            document.getElementById('checkoutItemTitle').innerText = `${name} — Ksh ${price}`;
+            document.getElementById('checkoutModal').style.display = 'flex';
+            window.updateFulfillmentDisplay();
+        };
+
+        window.updateFulfillmentDisplay = function() {
+            const opt = document.getElementById('deliveryOption').value;
+            document.getElementById('deliveryAddressBox').style.display = opt === 'delivery' ? 'block' : 'none';
+        };
+
+        window.submitFinalStoreOrder = function() {
+            const fulfillment = document.getElementById('deliveryOption').value;
+            const directions = document.getElementById('checkoutDirections').value.trim();
+            
+            // ⚠️ REPLACE THIS WITH YOUR BUSINESS WHATSAPP PHONE NUMBER
+            const adminWhatsAppNumber = "254746382622"; 
+
+            let messageString = `Hello NiGROOM, I want to order: ${selectedProductForCheckout.name} (Ksh ${selectedProductForCheckout.price}).\n`;
+            if (fulfillment === 'delivery') {
+                messageString += `🛵 Requesting Boda Delivery.\n📍 Directions/Landmark: ${directions}`;
+            } else {
+                messageString += `🏪 Mode: I will pick it up at the Khasolo/Napara Hub.`;
+            }
+
+            document.getElementById('checkoutModal').style.display = 'none';
+            window.open(`https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(messageString)}`, '_blank');
+        };
+
+        window.handleRegistration = async function() {
+            initSupabase();
+            const nameInput = document.getElementById('userName').value.trim();
+            const phoneInput = document.getElementById('userPhone').value.trim();
+            const villageInput = document.getElementById('userVillage').value.trim();
+            const userRole = document.getElementById('userRole').value;
+
+            if (!nameInput || !phoneInput || !villageInput) return showStatus("Please execute entries on all fields.", "error");
+
+            showStatus("Configuring account...", "loading");
+            currentUserPhone = phoneInput;
+
+            if (!supabaseClient || SUPABASE_URL === "YOUR_SUPABASE_URL") {
+                proceedToDashboard(nameInput, userRole, villageInput);
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('users_data')
+                    .insert([{ full_name: nameInput, phone_number: phoneInput, user_role: userRole, location_village: villageInput, is_online: false }]);
+
+                if (error) {
+                    console.error(error.message);
+                    showStatus("Syncing preview layout...", "warning");
+                    setTimeout(() => { proceedToDashboard(nameInput, userRole, villageInput); }, 800);
+                } else {
+                    showStatus("", "success");
+                    proceedToDashboard(nameInput, userRole, villageInput);
+                }
+            } catch (err) {
+                proceedToDashboard(nameInput, userRole, villageInput);
+            }
+        };
+
+        function proceedToDashboard(name, role, village) {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainDashboard').style.display = 'block';
+            document.getElementById('userGreeting').innerText = `Hello, ${name}!`;
+            document.getElementById('displayVillage').innerText = village;
+            
+            if (role === 'stylist') {
+                document.getElementById('stylistDashboardView').style.display = 'block';
+                document.getElementById('clientSearchSection').style.display = 'none';
+            } else {
+                document.getElementById('stylistDashboardView').style.display = 'none';
+                document.getElementById('clientSearchSection').style.display = 'block';
+                window.fetchStylistDirectory();
+            }
+        }
+
+        window.toggleStylistVisibility = async function() {
+            initSupabase();
+            if (!supabaseClient || !currentUserPhone) return;
+
+            const banner = document.getElementById('visibilityStatusBanner');
+            const button = document.getElementById('toggleVisibilityBtn');
+            isProfileOnline = !isProfileOnline;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('users_data')
+                    .update({ is_online: isProfileOnline })
+                    .eq('phone_number', currentUserPhone);
+
+                if (error) {
+                    alert("Rejected: " + error.message);
+                    isProfileOnline = !isProfileOnline;
+                    return;
+                }
+
+                if (isProfileOnline) {
+                    banner.style.background = "#ecfdf5"; banner.style.color = "#047857"; banner.style.borderColor = "#a7f3d0";
+                    banner.innerHTML = "🟢 <strong>Status: Live & Public</strong> Local clients can now instantly book you on WhatsApp!";
+                    button.innerText = "SWITCH PROFILE OFFLINE"; button.style.background = "#ef4444";
+                } else {
+                    banner.style.background = "#fef3c7"; banner.style.color = "#92400e"; banner.style.borderColor = "#fde68a";
+                    banner.innerHTML = "⚠️ <strong>Status: Invisible</strong> You are hidden from local client catalogs.";
+                    button.innerText = "GO ONLINE ON MARKETPLACE"; button.style.background = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+                }
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+        };
+
+        initSupabase();
+        window.addEventListener('DOMContentLoaded', initSupabase);
+        setTimeout(initSupabase, 800);
+    </script>
+</body>
+</html>
